@@ -30,9 +30,13 @@ namespace SmartSchool.WebAPI
         {
             services.AddDbContext<DataContext>( // apresenta o contexto que sera responsavel por gerenciar a minha conexão com o BD
                 context => context.UseSqlite(Configuration.GetConnectionString("Default")) // pega a string do configuration (appsettigns)
-            ); 
+            );
 
-            services.AddControllers();
+            // todas as vezes que eu estiver utilizando o IRepository, ele esteja inserindo o Repository
+            services.AddScoped<IRepository, Repository>();
+
+            // esse AddNewtonsoftJson é pq tava dando problema de loop nos models, ja que varios se chamavam e entrava no loop
+            services.AddControllers().AddNewtonsoftJson(opt => opt.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore); 
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "SmartSchool.WebAPI", Version = "v1" });
