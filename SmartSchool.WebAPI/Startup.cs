@@ -32,8 +32,11 @@ namespace SmartSchool.WebAPI
                 context => context.UseSqlite(Configuration.GetConnectionString("Default")) // pega a string do configuration (appsettigns)
             );
 
-            // todas as vezes que eu estiver utilizando o IRepository, ele esteja inserindo o Repository
+            // todas as vezes que eu estiver utilizando o IRepository, ele esteja inserindo o Repository (Independence injection)
             services.AddScoped<IRepository, Repository>();
+
+            // outra maneira de fazer a injeção de dependencia
+            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies()); // fazer o mapeamento entre meu Dtos e meus Models, feito no meu helpers que ligam a partir do profile
 
             // esse AddNewtonsoftJson é pq tava dando problema de loop nos models, ja que varios se chamavam e entrava no loop
             services.AddControllers().AddNewtonsoftJson(opt => opt.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore); 

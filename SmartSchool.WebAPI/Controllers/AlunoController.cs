@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SmartSchool.WebAPI.Data;
+using SmartSchool.WebAPI.Dtos;
 using SmartSchool.WebAPI.Models;
 using System;
 using System.Collections.Generic;
@@ -17,15 +19,26 @@ namespace SmartSchool.WebAPI.Controllers
 
         public readonly IRepository _repo;
 
-        public AlunoController(IRepository repo) {
+        public readonly IMapper _mapper;
+
+        public AlunoController(IRepository repo, IMapper mapper) {
             _repo = repo;
+            _mapper = mapper;
         }
 
         [HttpGet]
 
         public IActionResult Get() {
-            var result = _repo.GetAllAlunos(true); // true pra incluir os professores
-            return Ok(result);
+            var alunos = _repo.GetAllAlunos(true); // true pra incluir os professores
+            
+            return Ok(_mapper.Map<IEnumerable<AlunoDto>>(alunos));
+        }
+
+        [HttpGet("getRegister")]
+
+        public IActionResult GetRegister() {
+            var alunos = _repo.GetAllAlunos(true); 
+            return Ok(new AlunoRegistrarDto());
         }
 
         [HttpGet("{id}")] // agora passamos o id pela querystring, tipo: localhost:5000/api/aluno/ById/2
@@ -34,7 +47,7 @@ namespace SmartSchool.WebAPI.Controllers
             var aluno = _repo.GetAlunoById(id, false);
             if (aluno == null) return BadRequest("Aluno não encontrado");
 
-            return Ok(aluno);
+            return Ok(_mapper.Map<AlunoDto>(aluno));
         }
 
         /*[HttpGet("ByName")] // se nao passarmos o parametro como no antes, ele aceita pela querystring
@@ -48,36 +61,43 @@ namespace SmartSchool.WebAPI.Controllers
 
         [HttpPost]
 
-        public IActionResult Post(Aluno aluno) {
+        public IActionResult Post(AlunoDto model) {
+            var aluno = _mapper.Map<Aluno>(model);
+
             _repo.Add(aluno);
             if(_repo.SaveChanges())
-                return Ok(aluno);
+                return Created($"/api/aluno/{model.Id}", _mapper.Map<AlunoDto>(aluno));
 
             return BadRequest("Aluno não cadastrado");
         }
 
         [HttpPut("{id}")]
 
-        public IActionResult Put(int id, Aluno aluno) {
+        public IActionResult Put(int id, AlunoDto model) {
+
             var alu = _repo.GetAlunoById(id);
             if (alu == null) return BadRequest("Aluno não encontrado");
 
-            _repo.Update(aluno);
+            _mapper.Map(model, alu);
+
+            _repo.Update(alu);
             if (_repo.SaveChanges())
-                return Ok(aluno);
+                return Created($"/api/aluno/{model.Id}", _mapper.Map<AlunoDto>(alu));
 
             return BadRequest("Aluno não atualizado");
         }
 
         [HttpPatch("{id}")]
 
-        public IActionResult Patch(int id, Aluno aluno) {
+        public IActionResult Patch(int id, AlunoDto model) {
             var alu = _repo.GetAlunoById(id);
             if (alu == null) return BadRequest("Aluno não encontrado");
 
-            _repo.Update(aluno);
+            _mapper.Map(model, alu);
+
+            _repo.Update(alu);
             if (_repo.SaveChanges())
-                return Ok(aluno);
+                return Created($"/api/aluno/{model.Id}", _mapper.Map<AlunoDto>(alu));
 
             return BadRequest("Aluno não atualizado");
         }
