@@ -1,12 +1,13 @@
 ﻿using AutoMapper;
-using SmartSchool.WebAPI.Dtos;
+using SmartSchool.WebAPI.V1.Dtos;
 using SmartSchool.WebAPI.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using SmartSchool.WebAPI.Helpers;
 
-namespace SmartSchool.WebAPI.Helpers {
+namespace SmartSchool.WebAPI.V1.Profiles {
     public class SmartSchoolProfile : Profile { // profile do automapper que indica o .........
         public SmartSchoolProfile() {
             CreateMap<Aluno, AlunoDto>() // fala pro automapper que sempre que estiver trabalhando com aluno, quero que meu aluno seja mapeado com meu alunoDto

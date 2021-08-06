@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,20 +43,55 @@ namespace SmartSchool.WebAPI
 
             // esse AddNewtonsoftJson é pq tava dando problema de loop nos models, ja que varios se chamavam e entrava no loop
             services.AddControllers().AddNewtonsoftJson(opt => opt.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore); 
+
+            // Versionamento da api
+            services.AddVersionedApiExplorer(options => {
+                options.GroupNameFormat = "'v'VVV"; // exista um grupo
+                options.SubstituteApiVersionInUrl = true; // mudamos a url
+            })
+            .AddApiVersioning(options => {
+                options.AssumeDefaultVersionWhenUnspecified = true; // versão padrão pra api
+                options.DefaultApiVersion = new ApiVersion(1, 0);
+                options.ReportApiVersions = true;
+            });
+
+            var apiProviderDescription = services.BuildServiceProvider()
+                                                 .GetService<IApiVersionDescriptionProvider>(); // pega nossas versoes
+
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "SmartSchool.WebAPI", Version = "v1" });
+                foreach (var description in apiProviderDescription.ApiVersionDescriptions) { // para ter para todas as versoes
+
+                    c.SwaggerDoc(description.GroupName, // nome da versão
+                                 new OpenApiInfo { Title = "SmartSchool.WebAPI", 
+                                                   Version = description.ApiVersion.ToString(), // mudar a versão a cada loop 
+                                                   Description = "Descrição da Api" });
+
+                    var xmlCommentsFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml"; // adiciona os comentarios no Swagger
+                    var xmlCommentsFullPath = Path.Combine(AppContext.BaseDirectory, xmlCommentsFile); // conecta nosso xml acima com o base
+                    c.IncludeXmlComments(xmlCommentsFullPath);
+
+                }
             });
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app,
+                              IWebHostEnvironment env,
+                              IApiVersionDescriptionProvider apiVersionDescription) // passa isso para o versionamento
         {
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "SmartSchool.WebAPI v1"));
+                app.UseSwaggerUI(c => 
+                {
+                    foreach (var description in apiVersionDescription.ApiVersionDescriptions) {
+                        c.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json", description.GroupName.ToUpperInvariant());
+
+                    }
+                });
             }
 
             app.UseHttpsRedirection();

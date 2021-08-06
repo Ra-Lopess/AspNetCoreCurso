@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SmartSchool.WebAPI.Data;
-using SmartSchool.WebAPI.Dtos;
+using SmartSchool.WebAPI.V2.Dtos;
 using SmartSchool.WebAPI.Models;
 using System;
 using System.Collections.Generic;
@@ -11,20 +11,43 @@ using System.Threading.Tasks;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
-namespace SmartSchool.WebAPI.Controllers
+namespace SmartSchool.WebAPI.V2.Controllers
 {
-    [Route("api/[controller]")]
+    /// <summary>
+    /// 
+    /// </summary>
+    [Route("api/v{version:apiVersion}/[controller]")]
+    [ApiVersion("2.0")]
     [ApiController]
     public class AlunoController : ControllerBase {
 
+        /// <summary>
+        /// 
+        /// </summary>
+
         public readonly IRepository _repo;
 
+        /// <summary>
+        /// 
+        /// </summary>
+
         public readonly IMapper _mapper;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="repo"></param>
+        /// <param name="mapper"></param>
 
         public AlunoController(IRepository repo, IMapper mapper) {
             _repo = repo;
             _mapper = mapper;
         }
+
+        /// <summary>
+        /// Método responsável por retornar todos alunos
+        /// </summary>
+        /// <returns></returns>
 
         [HttpGet]
 
@@ -32,13 +55,6 @@ namespace SmartSchool.WebAPI.Controllers
             var alunos = _repo.GetAllAlunos(true); // true pra incluir os professores
             
             return Ok(_mapper.Map<IEnumerable<AlunoDto>>(alunos));
-        }
-
-        [HttpGet("getRegister")]
-
-        public IActionResult GetRegister() {
-            var alunos = _repo.GetAllAlunos(true); 
-            return Ok(new AlunoRegistrarDto());
         }
 
         [HttpGet("{id}")] // agora passamos o id pela querystring, tipo: localhost:5000/api/aluno/ById/2
@@ -75,21 +91,6 @@ namespace SmartSchool.WebAPI.Controllers
 
         public IActionResult Put(int id, AlunoDto model) {
 
-            var alu = _repo.GetAlunoById(id);
-            if (alu == null) return BadRequest("Aluno não encontrado");
-
-            _mapper.Map(model, alu);
-
-            _repo.Update(alu);
-            if (_repo.SaveChanges())
-                return Created($"/api/aluno/{model.Id}", _mapper.Map<AlunoDto>(alu));
-
-            return BadRequest("Aluno não atualizado");
-        }
-
-        [HttpPatch("{id}")]
-
-        public IActionResult Patch(int id, AlunoDto model) {
             var alu = _repo.GetAlunoById(id);
             if (alu == null) return BadRequest("Aluno não encontrado");
 
