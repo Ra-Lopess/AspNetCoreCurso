@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using SmartSchool.WebAPI.Helpers;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -51,10 +52,13 @@ namespace SmartSchool.WebAPI.V1.Controllers
 
         [HttpGet]
 
-        public IActionResult Get() {
-            var alunos = _repo.GetAllAlunos(true); // true pra incluir os professores
-            
-            return Ok(_mapper.Map<IEnumerable<AlunoDto>>(alunos));
+        public async Task<IActionResult> Get([FromQuery]PageParams pageParams) { // reclama de nn passar parametros, ent passa por query
+            var alunos = await _repo.GetAllAlunosAsync(pageParams, true); // true pra incluir os professores
+            var alunosResult = _mapper.Map<IEnumerable<AlunoDto>>(alunos);
+
+            Response.AddPagination(alunos.CurrentPage, alunos.PageSize, alunos.TotalCount, alunos.TotalPages); // puxa o metodo do meu helpers
+
+            return Ok(alunosResult);
         }
 
         /// <summary>
