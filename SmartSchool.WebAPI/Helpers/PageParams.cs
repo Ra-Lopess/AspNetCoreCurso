@@ -7,7 +7,7 @@ namespace SmartSchool.WebAPI.Helpers {
     public class PageParams { // temos que passar diversos parametros ???
         public int MaxPageSize = 50;
 
-        public int PageNumber { get; set; }
+        public int PageNumber { get; set; } = 1;
 
         private int pageSize = 10;
 

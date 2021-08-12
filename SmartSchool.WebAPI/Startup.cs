@@ -31,17 +31,18 @@ namespace SmartSchool.WebAPI
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<DataContext>( // apresenta o contexto que sera responsavel por gerenciar a minha conexão com o BD
-                context => context.UseSqlite(Configuration.GetConnectionString("Default")) // pega a string do configuration (appsettigns)
+            services.AddDbContext<DataContext>( // apresenta o contexto que sera responsavel por gerenciar a minha conexï¿½o com o BD
+                c => c.UseMySql(Configuration.GetConnectionString("MySqlConnection"),
+                new MySqlServerVersion(new Version(8, 0, 26)))
             );
 
             // todas as vezes que eu estiver utilizando o IRepository, ele esteja inserindo o Repository (Independence injection)
             services.AddScoped<IRepository, Repository>();
 
-            // outra maneira de fazer a injeção de dependencia
+            // outra maneira de fazer a injeï¿½ï¿½o de dependencia
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies()); // fazer o mapeamento entre meu Dtos e meus Models, feito no meu helpers que ligam a partir do profile
 
-            // esse AddNewtonsoftJson é pq tava dando problema de loop nos models, ja que varios se chamavam e entrava no loop
+            // esse AddNewtonsoftJson ï¿½ pq tava dando problema de loop nos models, ja que varios se chamavam e entrava no loop
             services.AddControllers().AddNewtonsoftJson(opt => opt.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore); 
 
             // Versionamento da api
@@ -50,7 +51,7 @@ namespace SmartSchool.WebAPI
                 options.SubstituteApiVersionInUrl = true; // mudamos a url
             })
             .AddApiVersioning(options => {
-                options.AssumeDefaultVersionWhenUnspecified = true; // versão padrão pra api
+                options.AssumeDefaultVersionWhenUnspecified = true; // versï¿½o padrï¿½o pra api
                 options.DefaultApiVersion = new ApiVersion(1, 0);
                 options.ReportApiVersions = true;
             });
@@ -62,10 +63,10 @@ namespace SmartSchool.WebAPI
             {
                 foreach (var description in apiProviderDescription.ApiVersionDescriptions) { // para ter para todas as versoes
 
-                    c.SwaggerDoc(description.GroupName, // nome da versão
+                    c.SwaggerDoc(description.GroupName, // nome da versï¿½o
                                  new OpenApiInfo { Title = "SmartSchool.WebAPI", 
-                                                   Version = description.ApiVersion.ToString(), // mudar a versão a cada loop 
-                                                   Description = "Descrição da Api" });
+                                                   Version = description.ApiVersion.ToString(), // mudar a versï¿½o a cada loop 
+                                                   Description = "DescriÃ§Ã£o da Api" });
 
                     var xmlCommentsFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml"; // adiciona os comentarios no Swagger
                     var xmlCommentsFullPath = Path.Combine(AppContext.BaseDirectory, xmlCommentsFile); // conecta nosso xml acima com o base
@@ -84,21 +85,23 @@ namespace SmartSchool.WebAPI
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.UseSwagger();
-                app.UseSwaggerUI(c => 
-                {
-                    foreach (var description in apiVersionDescription.ApiVersionDescriptions) {
-                        c.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json", description.GroupName.ToUpperInvariant());
-
-                    }
-                });
             }
 
-            app.UseHttpsRedirection();
+            app.UseSwagger();
+            app.UseSwaggerUI(c => 
+            {
+                foreach (var description in apiVersionDescription.ApiVersionDescriptions) {
+                    c.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json", description.GroupName.ToUpperInvariant());
+                    c.RoutePrefix = "";
+
+                }
+            });
+
+            //app.UseHttpsRedirection();
 
             app.UseRouting();
 
-            app.UseAuthorization();
+            //app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
